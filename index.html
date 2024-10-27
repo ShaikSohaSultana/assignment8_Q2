@@ -1,0 +1,55 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spam Detection</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; height: 100vh; background-color: #f7f7f7; }
+        .container { width: 300px; padding: 20px; background-color: #fff; border-radius: 5px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
+        .result { margin-top: 10px; font-weight: bold; }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Email Spam Detection</h2>
+        <textarea id="emailText" rows="6" placeholder="Write your email here..."></textarea><br>
+        <button onclick="checkSpam()">Check Spam</button>
+        <div id="result" class="result"></div>
+        <button onclick="loadCSV()">Load CSV Data</button>
+        <div id="csvData"></div>
+    </div>
+    <script>
+        async function checkSpam() {
+            const emailText = document.getElementById("emailText").value;
+            const response = await fetch("/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: emailText })
+            });
+            const result = await response.json();
+            document.getElementById("result").innerText = `Result: ${result.prediction}`;
+        }
+
+        async function loadCSV() {
+            const response = await fetch('/static/spam_data.csv');
+            const data = await response.text();
+            const csvData = parseCSV(data);
+            document.getElementById("csvData").innerText = JSON.stringify(csvData, null, 2);
+        }
+
+        function parseCSV(data) {
+            const rows = data.split('\n').map(row => row.split(','));
+            const headers = rows[0];
+            return rows.slice(1).map(row => {
+                return headers.reduce((obj, header, index) => {
+                    obj[header] = row[index];
+                    return obj;
+                }, {});
+            });
+        }
+    </script>
+</body>
+</html>
